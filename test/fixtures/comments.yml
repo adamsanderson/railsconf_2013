@@ -1,0 +1,21 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+funny:    {id: 1,  hedgehog: horrace,  comment: 'That is a very funny hedgehog!'}
+feet:     {id: 2,  hedgehog: horrace,  comment: 'He has really little feet.'}
+better:   {id: 3,  hedgehog: horrace,  comment: 'I once had a hedgehog like this, but better.'}
+eyes:     {id: 4,  hedgehog: poke,     comment: 'I am enjoying these photos of your hedgehog''s beady little eyes'}
+modeling: {id: 5,  hedgehog: marty,    comment: 'Have you considered hedgehog modeling?  This is a very nice hedgehog.  We do glamour shots and everything.'}
+beets:    {id: 6,  hedgehog: marty,    comment: 'Does he enjoy beets?  Mine loves them'}
+cute:     {id: 7,  hedgehog: bartleby, comment: 'OMG SO CUTE!'}
+oil:      {id: 8,  hedgehog: bartleby, comment: 'What brand of oil do you use?  Have you tried QuillSwill?'}
+oranges:  {id: 9,  hedgehog: poke,     comment: 'I really enjoy oranges'}
+crush:    {id: 10, hedgehog: marty,    comment: 'My hedgehog has a crush on your hedgehog, perhaps they could play some time?  I don''t know.'}
+sue:      {id: 11, hedgehog: spinsky,  comment: 'Your hedgehog bit mine at the park, I shall sue you good sir!'}
+quote:    {id: 12, hedgehog: poke,     comment: 'You know what they say, quill quo pro.'}
+ball:     {id: 13, hedgehog: horrace,  comment: 'How small of a ball can yours get into?  Mine fits in an egg carton.'}
+party:    {id: 14, hedgehog: monty,    comment: 'You should bring him down to the Cascadia hog party.'}
+lumpy:    {id: 15, hedgehog: monty,    comment: 'That is a very lumpy hedgehog.'}
+omg:      {id: 16, hedgehog: poke,     comment: 'OMG!'}
+saw_you:  {id: 17, hedgehog: monty,    comment: 'Saw you at Cascadia, good times!'}
+beads:    {id: 18, hedgehog: thomas,   comment: 'My hedgehog keeps eating beads, any ideas?'}
+grapes:   {id: 19, hedgehog: thomas,   comment: 'Can I feed him grapes? I think he enjoys them.'}

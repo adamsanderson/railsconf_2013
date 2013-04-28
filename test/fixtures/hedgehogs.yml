@@ -1,0 +1,14 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+horrace:  {name: 'Horrace',  age: 2, tags: ['cuddly', 'cute'],                       custom: {"favorite_food": "lemons",  "weight": "2lbs"}}
+marty:    {name: 'Marty',    age: 3, tags: ['spiny', 'prickly', 'cute'],             custom: {"enjoys": "golf",           "color": "brown"}}
+quilby:   {name: 'Quilby',   age: 2, tags: ['cuddly', 'prickly', 'hungry'],          custom: {"favorite_food": "pasta",   "color": "tan"}}
+thomas:   {name: 'Thomas',   age: 4, tags: ['grumpy', 'spiny', 'sleepy', 'prickly'], custom: {"favorite_food": "grubs",   "weight": "37oz"}       }
+spinsky:  {name: 'Spinsky',  age: 3, tags: ['sharp', 'nasty', 'rude'],               custom: {"enjoys": "hiding",         "plays": "violin"}}
+poke:     {name: 'Poke',     age: 1, tags: ['tiny', 'friendly', 'hungry'],           custom: {"favorite_food": "pasta",   "eye_color": "hazel"}}
+henry:    {name: 'Henry',    age: 4, tags: ['large', 'sensible'],                    custom: {"plays": "violin",          "color": "tope"}}
+bartleby: {name: 'Bartleby', age: 5, tags: ['large', 'sleepy', 'proper'],            custom: {"color": "brown",           "url": "http://bartbleby_the_hedgehog.me"}}
+franklin: {name: 'Franklin', age: 5, tags: ['spiny', 'round', 'tiny'],               custom: {"color": "tan"}}
+monty:    {name: 'Monty',    age: 3, tags: ['proper', 'aloof'],                      custom: {"favorite_food":            "lemons", "weight": "2lbs"}}
+minzy:    {name: 'Minzy',    age: 1, tags: ['silly', 'pokey'],                       custom: {"enjoys": "golf",           "color": "brown"}}
+mabel:    {name: 'Mabel',    age: 6, tags: ['sweet', 'sensible', 'hungry'],          custom: {"favorite_food": "pasta",   "color": "tan"}}

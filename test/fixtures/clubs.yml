@@ -1,0 +1,12 @@
+north:      {id: 1,  name: 'North American League',      path: [1]}
+east:       {id: 2,  name: 'Eastern Division',           path: [1,2]}
+west:       {id: 3,  name: 'Western Division',           path: [1,3]}
+new_york:   {id: 4,  name: 'New York Quillers',          path: [1,2,4]}
+boston:     {id: 5,  name: 'Boston Spine Fancy',         path: [1,2,5]}
+cascade:    {id: 6,  name: 'Cascadia Hog Friends',       path: [1,3,6]}
+california: {id: 7,  name: 'Californian Hedge Society',  path: [1,3,7]}
+oc:         {id: 8,  name: 'Real Hogs of the OC',        path: [1,3,7,8]}
+south:      {id: 9,  name: 'South American League',      path: [9]}
+seattle:    {id: 10, name: 'Seattle Hog Haven',          path: [1,3,6,10]}
+portland:   {id: 11, name: 'Portland Pricklers',         path: [1,3,6,11]}
+hipster:    {id: 12, name: 'Hipster Hogs',               path: [1,3,7,12]}
