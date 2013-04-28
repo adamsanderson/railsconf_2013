@@ -1,28 +1,30 @@
-== README
+Postgres, the Best Tool You're Already Using
+============================================
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+This code is meant to supplement my RailsConf presentation.  In brief the
+ActiveRecord models demonstrate some simple ways to use Postgres' support
+for arrays, hashes, and full text search to build some useful features such
+as tagging, hierarchies (tree structures), capture custom data, and search
+user content.
 
-Things you may want to cover:
+After the presentation, I will make the slides available here as well.
 
-* Ruby version
+* Ruby 2.0 (1.9 should work fine though)
+* Rails 4.0.0 beta 1
+* Postgres 9.x with the `pg` gem
 
-* System dependencies
+Setup:
+------
 
-* Configuration
+* `bundle install` will load the required gems (`rails v4.0.0` and `pg`)
+* `rake db:create` to create the database
+* `rake db:migrate` to ensure migrations have run
+* `rake test` will then perform the tests
 
-* Database creation
+To experiment with the models use the rails console: `rails c`.  If you want to use it with the test data,
+run `rails c test`.
 
-* Database initialization
+If you have any questions, feel free to contact me.
 
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
-
-
-Please feel free to use a different markup language if you do not plan to run
-<tt>rake doc:app</tt>.
+    adam sanderson
+    netghost@gmail.com
