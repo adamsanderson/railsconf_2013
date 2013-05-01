@@ -1,0 +1,1193 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+	<title>Postgres, the Best Tool You're Already Using</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=792, user-scalable=no">
+	<link rel="stylesheet" href="shower/themes/lp/styles/screen.css">
+  <link rel="stylesheet" href="shower/themes/lp/styles/github.css">
+	<!--
+		To apply styles to the certain slides
+		set slide ID to get needed elements
+		-->
+	<style>
+
+	</style>
+</head>
+<body class="list">
+	
+  <header class='caption'><div>
+<h2>Postgres, the Best Tool You&#39;re Already Using</h2>
+
+<p><a href="http://monkeyandcrow.com">Adam Sanderson</a>, <a href="http://liquidplanner.com">LiquidPlanner</a></p>
+
+</div></header>
+
+<section class='slide'><div>
+<h2>Postgres</h2>
+
+<h2>The Best Tool You&#39;re Already Using</h2>
+
+<ul>
+<li><a href="http://monkeyandcrow.com">Adam Sanderson</a></li>
+<li><a href="http://liquidplanner.com">LiquidPlanner</a></li>
+</ul>
+
+<p><img src='images/lp_logo.png' style='width: 500px; position: absolute; left: 50px; bottom: 100px'/>
+<img src='images/hedgehog_comment.png' style='width: 300px; position: absolute; right: 200px; bottom: 100px'/></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Adam Sanderson</h2>
+
+<p>I have been a full stack engineer at LiquidPlanner for 5 years.</p>
+
+<ul>
+<li>I got off in Kansas<sup>*</sup>, and that&#39;s ok!</li>
+<li>Github: <a href="https://github.com/adamsanderson">adamsanderson</a></li>
+<li>Twitter: <a href="https://twitter.com/adamsanderson">adamsanderson</a></li>
+<li>Blog: <a href="http://monkeyandcrow.com">http://monkeyandcrow.com</a></li>
+</ul>
+
+<p><span class='footnote'>
+  * Seattle
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<p><img src='images/lp_logo.png' style='width: 500px; '/></p>
+
+<p>Online project management with probabilistic scheduling.</p>
+
+<ul>
+<li>Started in 2007 with Rails 1.x</li>
+<li>Used Postgres from the beginning</li>
+<li>We have learned some great techniques along the way</li>
+</ul>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Topics</h2>
+
+<ul>
+<li>Tagging</li>
+<li>Hierarchy</li>
+<li>Custom Data</li>
+<li>Full Text Search</li>
+</ul>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Method</h2>
+
+<p>For each topic, we&#39;ll cover the SQL before we cover its use in ActiveRecord.</p>
+
+<p>We will use Postgres 9.x, Ruby 1.9 syntax, and ActiveRecord 4.0.  </p>
+
+<p>If you understand the SQL you can use it in any version of ActiveRecord, 4.0 just makes it easier.</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Backstory</h2>
+
+<p>You just built a great new social network for hedgehog lovers around the world, <a href="http://hedgewith.me/">HedgeWith.me</a>.  </p>
+
+<p>Everything is going well. You have a few users, but now they want more.</p>
+
+<p><img src='images/hedgehog_mustache.png' style='width: 200px; position: absolute; left: 100px;'/>
+<img src='images/hedgehog_comment.png' style='width: 280px; position: absolute; right: 300px;'/></p>
+
+</div></section>
+
+<section class='slide'><div>
+<blockquote>
+<p>My hedgehog is afraid of grumpy hedgehogs, but likes cute ones how can I find him friends?
+<cite>hedgehogs4life</cite></p>
+</blockquote>
+
+<h2>Tagging </h2>
+
+<p>People want to be able to tag their hedgehogs, and then find other hedgehogs with certain tags.</p>
+
+<p><img src='images/hedgehog_tags.png' style='width: 300px; position: absolute; left: 300px; bottom: 40px;'/></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Defining Arrays in SQL</h2>
+
+<pre><code class="sql">CREATE TABLE hedgehogs (
+    id      integer primary key,
+    name    text,
+    age     integer,
+    tags    text[]
+);
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Defining Arrays in ActiveRecord</h2>
+
+<pre><code class="ruby">create_table :hedgehogs do |t|
+  t.string  :name
+  t.integer :age
+  t.text    :tags, array: true
+end
+</code></pre>
+
+<p>ActiveRecord 4.x introduced arrays for Postgres, use <code>array:true</code></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Heads Up</h2>
+
+<p>Define array columns as <code>t.text</code> instead of <code>t.string</code> to avoid casting.</p>
+
+<p>Postgres assumes that <code>ARRAY[&#39;cute&#39;, &#39;cuddly&#39;]</code> is of type <code>text[]</code> and will require you to cast, otherwise you will see errors like this:</p>
+
+<p><code>ERROR:  operator does not exist: character varying[] &amp;&amp; text[]</code></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Boolean Set Operators </h2>
+
+<p>You can use the set operators to query arrays.</p>
+
+<ul>
+<li><code>A @&gt; B</code> &nbsp; A contains all of B</li>
+<li><code>A &amp;&amp; B</code> &nbsp; A overlaps any of B</li>
+</ul>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Querying Tags in SQL</h2>
+
+<p>Find all the hedgehogs that are <span class='highlight'>spiny</span> or <span class='highlight'>prickly</span>:</p>
+
+<pre><code class="sql">SELECT name, tags FROM hedgehogs 
+WHERE tags &amp;&amp; ARRAY[&#39;spiny&#39;, &#39;prickly&#39;];
+</code></pre>
+
+<p><span class='footnote'>
+<code>A &amp;&amp; B</code> &nbsp; A overlaps any of B
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Querying Tags in SQL </h2>
+
+<table><thead>
+<tr>
+<th>name</th>
+<th>tags</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>Marty</td>
+<td><span class='highlight'>spiny</span>, <span class='highlight'>prickly</span>, cute</td>
+</tr>
+<tr>
+<td>Quilby</td>
+<td>cuddly, <span class='highlight'>prickly</span>, hungry</td>
+</tr>
+<tr>
+<td>Thomas</td>
+<td>grumpy, <span class='highlight'>prickly</span>, sleepy, <span class='highlight'>spiny</span></td>
+</tr>
+<tr>
+<td>Franklin</td>
+<td><span class='highlight'>spiny</span>, round, tiny</td>
+</tr>
+</tbody></table>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Querying Tags in SQL</h2>
+
+<p>Find all the hedgehogs that are <span class='highlight'>spiny</span> and <span class='highlight'>prickly</span>:</p>
+
+<pre><code class="sql">SELECT name, tags FROM hedgehogs 
+WHERE tags @&gt; ARRAY[&#39;spiny&#39;, &#39;prickly&#39;];
+</code></pre>
+
+<p><span class='footnote'>
+<code>A @&gt; B</code> &nbsp; A contains all the B
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Querying Tags in SQL </h2>
+
+<table><thead>
+<tr>
+<th>name</th>
+<th>tags</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>Marty</td>
+<td><span class='highlight'>spiny</span>, <span class='highlight'>prickly</span>, cute</td>
+</tr>
+<tr>
+<td>Thomas</td>
+<td>grumpy, <span class='highlight'>prickly</span>, sleepy, <span class='highlight'>spiny</span></td>
+</tr>
+</tbody></table>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Querying Tags in ActiveRecord</h2>
+
+<p>Find all the hedgehogs that are spiny and prickly</p>
+
+<pre><code class="ruby">Hedgehog.where &quot;tags @&gt; ARRAY[?]&quot;, [&#39;spiny&#39;, &#39;prickly&#39;]
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Querying Tags in ActiveRecord</h2>
+
+<p>Create scopes to encapsulate set operations:</p>
+
+<pre><code class="ruby">class Hedgehog &lt; ActiveRecord::Base
+  scope :any_tags, -&gt; (* tags){where(&#39;tags &amp;&amp; ARRAY[?]&#39;, tags)}
+  scope :all_tags, -&gt; (* tags){where(&#39;tags @&gt; ARRAY[?]&#39;, tags)}
+end
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Querying Tags in ActiveRecord</h2>
+
+<p>Find all the hedgehogs that are spiny or large, and older than 4:</p>
+
+<pre><code class="ruby">Hedgehog.any_tags(&#39;spiny&#39;, &#39;large&#39;).where(&#39;age &gt; ?&#39;, 4)
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<blockquote>
+<p>Hi, I run an influential hedgehog club.  Our members would all use <a href="http://hedgewith.me">HedgeWith.me</a>, if they could show which hogs are members of our selective society.
+<cite>Boston Spine Fancy President</cite></p>
+</blockquote>
+
+<h2>Hierarchy</h2>
+
+<p>Apparently there are thousands of hedgehog leagues, divisions, societies, clubs, and so forth.</p>
+
+<p><img src='images/hedgehog_clubs.png' style='width: 200px; position: absolute; left: 300px; bottom: 50px'/></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Hierarchy</h2>
+
+<p>We need to efficiently model a club hierarchy like this:</p>
+
+<ul>
+<li>North American League
+
+<ul>
+<li>Western Division
+
+<ul>
+<li>Cascadia Hog Friends</li>
+<li>Californian Hedge Society</li>
+</ul></li>
+</ul></li>
+</ul>
+
+<p>How can we support operations like finding a club&#39;s depth, children, or parents?</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Materialized Path in SQL</h2>
+
+<p>Encode the parent ids of each record in its <code>path</code>.</p>
+
+<pre><code class="sql">CREATE TABLE clubs (
+    id              integer primary key,
+    name            text,
+    path            integer[]
+);
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Querying a Materialized Path</h2>
+
+<table><thead>
+<tr>
+<th>id</th>
+<th>name</th>
+<th><span style='width:12em; display: block;'>path</span></th>
+</tr>
+</thead><tbody>
+<tr>
+<td>1</td>
+<td><span style='padding-left: 0em;'>North American League  <span/></td>
+<td>[1]</td>
+</tr>
+<tr>
+<td>2</td>
+<td><span style='padding-left: 2em;'>Eastern Division       <span/></td>
+<td>[1,2]</td>
+</tr>
+<tr>
+<td>4</td>
+<td><span style='padding-left: 4em;'>New York Quillers      <span/></td>
+<td>[1,2,4]</td>
+</tr>
+<tr>
+<td>5</td>
+<td><span style='padding-left: 4em;'>Boston Spine Fancy     <span/></td>
+<td>[1,2,5]</td>
+</tr>
+<tr>
+<td>3</td>
+<td><span style='padding-left: 2em;'>Western Division       <span/></td>
+<td>[1,3]</td>
+</tr>
+<tr>
+<td>6</td>
+<td><span style='padding-left: 4em;'>Cascadia Hog Friends   <span/></td>
+<td>[1,3,6]</td>
+</tr>
+<tr>
+<td>7</td>
+<td><span style='padding-left: 4em;'>California Hedge Society<span/></td>
+<td>[1,3,7]</td>
+</tr>
+</tbody></table>
+
+<p>...</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Materialized Path: Depth </h2>
+
+<p>The depth of each club is simply the length of its path.</p>
+
+<ul>
+<li><code>array_length(array, dim)</code> &nbsp; returns the length of the array</li>
+</ul>
+
+<p><code>dim</code> will always be 1 unless you are using multidimensional arrays.</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Materialized Path: Depth </h2>
+
+<p>Display the top two tiers of hedgehog clubs:</p>
+
+<pre><code class="sql">SELECT name, path, array_length(path, 1) AS depth 
+FROM clubs
+WHERE array_length(path, 1) &lt;= 2
+ORDER BY path;
+</code></pre>
+
+<p><span class='footnote'>
+<code>array_length(path, 1)</code> &nbsp; is the depth of record
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Materialized Path: Depth  </h2>
+
+<table><thead>
+<tr>
+<th>name</th>
+<th>path</th>
+<th>depth</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><span style='padding-left: 0em;'>North American League </span></td>
+<td>[1]</td>
+<td>1</td>
+</tr>
+<tr>
+<td><span style='padding-left: 2em;'>Eastern Division      </span></td>
+<td>[1,2]</td>
+<td>2</td>
+</tr>
+<tr>
+<td><span style='padding-left: 2em;'>Western Division      </span></td>
+<td>[1,3]</td>
+<td>2</td>
+</tr>
+<tr>
+<td><span style='padding-left: 0em;'>South American League </span></td>
+<td>[9]</td>
+<td>1</td>
+</tr>
+</tbody></table>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Materialized Path: Children</h2>
+
+<p>Find all the clubs that are children of the California Hedge Society, ID: <code>7</code>.</p>
+
+<pre><code class="sql">SELECT id, name, path FROM clubs 
+WHERE path &amp;&amp; ARRAY[7]
+ORDER BY path
+</code></pre>
+
+<p><span class='footnote'>
+<code>A &amp;&amp; B</code> &nbsp; A overlaps any of B
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Materialized Path: Children</h2>
+
+<table><thead>
+<tr>
+<th>id</th>
+<th>name</th>
+<th>path</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>7</td>
+<td><span style='padding-left: 0em;'>Californian Hedge Society </span></td>
+<td>[1,3,<span class='highlight'>7</span>]</td>
+</tr>
+<tr>
+<td>8</td>
+<td><span style='padding-left: 2em;'>Real Hogs of the OC       </span></td>
+<td>[1,3,<span class='highlight'>7</span>,8]</td>
+</tr>
+<tr>
+<td>12</td>
+<td><span style='padding-left: 2em;'>Hipster Hogs              </span></td>
+<td>[1,3,<span class='highlight'>7</span>,12]</td>
+</tr>
+</tbody></table>
+
+<p><span class='footnote'>
+Apparently it is <a href="http://en.wikipedia.org/wiki/Domesticated_hedgehog#cite_note-1">illegal</a> to own hedgehogs in California
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Materialized Path: Parents </h2>
+
+<p>Find the parents of the California Hedge Society, Path: <code>ARRAY[1,3,7]</code>.</p>
+
+<pre><code class="sql">SELECT name, path FROM clubs 
+WHERE ARRAY[id] &amp;&amp; ARRAY[1,3,7]
+ORDER BY path;
+</code></pre>
+
+<p><span class='footnote'>
+<code>A &amp;&amp; B</code> &nbsp; A overlaps any of B
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Materialized Path: Parents </h2>
+
+<table><thead>
+<tr>
+<th>id</th>
+<th>name</th>
+<th>path</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>1</td>
+<td><span style='padding-left: 0em;'>North American League     </span></td>
+<td>[1]</td>
+</tr>
+<tr>
+<td>3</td>
+<td><span style='padding-left: 2em;'>Western Division          </span></td>
+<td>[1,3]</td>
+</tr>
+<tr>
+<td>7</td>
+<td><span style='padding-left: 4em;'>Californian Hedge Society </span></td>
+<td>[1,3,7]</td>
+</tr>
+</tbody></table>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>ActiveRecord: Arrays &amp; Depth</h2>
+
+<p>With ActiveRecord 4.x, <code>path</code> is just ruby array.</p>
+
+<pre><code class="ruby">class Club &lt; ActiveRecord::Base
+  def depth
+    self.path.length
+  end
+  ...
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Querying in ActiveRecord</h2>
+
+<p>Encapsulate these conditions as instance methods:</p>
+
+<pre><code class="ruby">class Club &lt; ActiveRecord::Base
+  def children
+    Club.where(&#39;path &amp;&amp; ARRAY[?]&#39;, self.id)
+  end
+  def parents
+    Club.where(&#39;ARRAY[id] &amp;&amp; ARRAY[?]&#39;, self.path)
+  end
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Querying in ActiveRecord</h2>
+
+<p>Now we have an easy way to query the hierarchy.</p>
+
+<pre><code class="ruby">@club.parents.limit(5)
+@club.children.joins(:hedgehogs).merge(Hedgehog.any_tags(&#39;silly&#39;))
+</code></pre>
+
+<p>These features can all work together.</p>
+
+<p><span class='footnote'>
+  Mind blown?
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<blockquote>
+<p>I need to keep track of my hedgehogs&#39; favorite foods, colors, weight, eye color, and shoe sizes!
+<cite>the Quantified Hedgehog Owner</cite></p>
+
+<p>If I am forced to enter my hedgehog&#39;s shoe size, I will quit immediately!
+<cite>the Unquantified Hedgehog Owner</cite></p>
+</blockquote>
+
+<h2>Custom Data </h2>
+
+<p>Your users want to record arbitrary data about their hedgehogs.</p>
+
+<p><img src='images/hedgehog_data.png' style='width: 400px; position: absolute; right: 100px; bottom: 150px'/></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Hstore</h2>
+
+<p>Hstore provides a hash column type.  It is a useful alternative to ActiveRecord&#39;s <code>serialize</code> where the keys and values can be queried in Postgres.</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Hstore</h2>
+
+<p>Hstore needs to be installed manually.  Your migration will look like this:</p>
+
+<pre><code class="ruby">class InstallHstore &lt; ActiveRecord::Migration
+  def up
+    execute &#39;CREATE EXTENSION hstore&#39;
+  end
+  ...
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Heads Up </h2>
+
+<p>Although hstore is supported by ActiveRecord 4.x, the default schema format does not support extensions.</p>
+
+<p>Update <code>config/application.rb</code> to use the SQL schema format, otherwise your tests will fail.</p>
+
+<pre><code class="ruby">class Application &lt; Rails::Application
+  config.active_record.schema_format = :sql
+end
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Defining an Hstore in SQL</h2>
+
+<pre><code class="sql">CREATE TABLE hedgehogs (
+    id      integer primary key,
+    name    text,
+    age     integer,
+    tags    text[],
+    custom  hstore DEFAULT &#39;&#39; NOT NULL
+);
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Defining an Hstore in ActiveRecord</h2>
+
+<p><code>hstore</code> is supported in ActiveRecord 4.x as a normal column type:</p>
+
+<pre><code class="ruby">create_table :hedgehogs do |t|
+  t.string  :name
+  t.integer :age
+  t.text    :tags, array: true
+  t.hstore  :custom, :default =&gt; &#39;&#39;, :null =&gt; false
+end
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Heads Up </h2>
+
+<p>Save yourself some hassle, and specify an empty hstore by default: </p>
+
+<pre><code class='ruby'>t.hstore  :custom, <span class='highlight'>:default => '', :null => false</span></code></pre>
+
+<p>Otherwise new records will have null hstores.</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Hstore Format </h2>
+
+<p>Hstore uses a text format, it looks a lot like a ruby 1.8 hash:</p>
+
+<pre><code class="sql">UPDATE hedgehogs SET 
+custom = &#39;&quot;favorite_food&quot; =&gt; &quot;lemons&quot;, &quot;weight&quot; =&gt; &quot;2lbs&quot;&#39;  
+WHERE id = 1;
+</code></pre>
+
+<p>Be careful of quoting.</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Hstore Operators </h2>
+
+<p>Common functions and operators:</p>
+
+<ul>
+<li><code>defined(A, B)</code> &nbsp; Does A have B?</li>
+<li><code>A -&gt; B</code> &nbsp; Get B from A.  In ruby this would be A[B]</li>
+</ul>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Query Hstore in SQL </h2>
+
+<p>Find all the favorite foods of the hedgehogs:</p>
+
+<pre><code class="sql">SELECT name, custom -&gt; &#39;favorite_food&#39; AS food 
+FROM hedgehogs WHERE defined(custom, &#39;favorite_food&#39;);
+</code></pre>
+
+<p><span class='footnote'>
+  <code>defined(A, B)</code> &nbsp; Does A have B?<br/>
+  <code>A -&gt; B</code> &nbsp; Get B from A.  In ruby this would be A[B]
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Query Hstore in SQL </h2>
+
+<table><thead>
+<tr>
+<th>name</th>
+<th>food</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>Horrace</td>
+<td>lemons</td>
+</tr>
+<tr>
+<td>Quilby</td>
+<td>pasta</td>
+</tr>
+<tr>
+<td>Thomas</td>
+<td>grubs</td>
+</tr>
+</tbody></table>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Query Hstore in ActiveRecord</h2>
+
+<p>Create scopes to make querying easier:</p>
+
+<pre><code class="ruby">class Hedgehog &lt; ActiveRecord::Base
+  scope :has_key,   -&gt; (key){ where(&#39;defined(custom, ?)&#39;, key) }
+  scope :has_value, -&gt; (key, value){ where(&#39;custom -&gt; ? = ?&#39;, key, value) }
+  ...
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Query Hstore in ActiveRecord</h2>
+
+<p>Find hedgehogs with a custom <code>color</code>:</p>
+
+<pre><code class="ruby">Hedgehog.has_key(&#39;color&#39;)
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Query Hstore in ActiveRecord</h2>
+
+<p>Find hedgehogs that are brown:</p>
+
+<pre><code class="ruby">Hedgehog.has_value(&#39;color&#39;, &#39;brown&#39;)
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Query Hstore in ActiveRecord</h2>
+
+<p>Find all the silly, brown, hedgehogs:</p>
+
+<pre><code class="ruby">Hedgehog.any_tags(&#39;silly&#39;).has_value(&#39;color&#39;, &#39;brown&#39;)
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Updating an Hstore with ActiveRecord </h2>
+
+<p>With ActiveRecord 4.x, hstore columns are just hashes:</p>
+
+<pre><code class="ruby">hedgehog.custom[&quot;favorite_color&quot;] = &quot;ochre&quot;
+hedgehog.custom = {favorite_food: &quot;Peanuts&quot;, shoe_size: 3}
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Heads Up </h2>
+
+<p>Hstore columns are always stored as strings:</p>
+
+<pre><code class="ruby">hedgehog.custom[&quot;weight&quot;] = 3
+hedgehog.save!
+hedgehog.reload
+hedgehog.custom[&#39;weight&#39;].class #=&gt; String
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<blockquote>
+<p>Someone commented on my hedgehog.  They said they enjoy his beady little eyes, but I can&#39;t find it.
+<cite>hog<em>mama</em>73</cite></p>
+</blockquote>
+
+<h2>Full Text Search </h2>
+
+<p>Your users want to be able to search within their comments.</p>
+
+<p><img src='images/hedgehog_comment.png' style='width: 250px; position: absolute; right: 300px; bottom: 80px'/></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search in SQL </h2>
+
+<pre><code class="sql">CREATE TABLE comments (
+    id              integer primary key,
+    hedgehog_id     integer,
+    body            text
+);
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search Data Types</h2>
+
+<p>There are two important data types:</p>
+
+<ul>
+<li><code>tsvector</code> &nbsp; represents the text to be searched</li>
+<li><code>tsquery</code> &nbsp; represents the search query</li>
+</ul>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search Functions</h2>
+
+<p>There are two main functions that convert strings into these types:</p>
+
+<ul>
+<li><code>to_tsvector(configuration, text)</code> &nbsp; creates a normalized <code>tsvector</code></li>
+<li><code>to_tsquery(configuration, text)</code> &nbsp; creates a normalized <code>tsquery</code></li>
+</ul>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search Normalization</h2>
+
+<p>Postgres removes common stop words:</p>
+
+<pre><code class="sql">select to_tsvector(&#39;A boy and his hedgehog went to Portland&#39;);
+-- boy, hedgehog, portland, went
+
+select to_tsvector(&#39;I need a second line to fill space here.&#39;);
+-- fill, line, need, second, space
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search Normalization</h2>
+
+<p>Stemming removes common endings from words:</p>
+
+<table><thead>
+<tr>
+<th>term</th>
+<th>stemmed</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>hedgehogs</td>
+<td>hedgehog</td>
+</tr>
+<tr>
+<td>enjoying</td>
+<td>enjoy</td>
+</tr>
+<tr>
+<td>piping</td>
+<td>pipe</td>
+</tr>
+</tbody></table>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search Operators </h2>
+
+<p>Vectors:</p>
+
+<ul>
+<li><code>V @@ Q</code> &nbsp; Searches V for Q</li>
+</ul>
+
+<p>Queries: </p>
+
+<ul>
+<li><code>V @@ (A &amp;&amp; B)</code> &nbsp; Searches V for A and B</li>
+<li><code>V @@ (A || B)</code> &nbsp; Searches V for A or B</li>
+</ul>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search Querying</h2>
+
+<p>Find comments about &quot;enjoying&quot; something:</p>
+
+<pre><code class="sql">SELECT body 
+FROM comments 
+WHERE to_tsvector(&#39;english&#39;, body) 
+  @@  to_tsquery(&#39;english&#39;,&#39;enjoying&#39;);
+</code></pre>
+
+<p><span class='footnote'>
+<code>V @@ Q</code> &nbsp; Searches V for Q
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search Querying</h2>
+
+<ul>
+<li>Does he <span class='highlight'>enjoy</span> beets?  Mine loves them<br></li>
+<li>I really <span class='highlight'>enjoy</span> oranges<br></li>
+<li>I am <span class='highlight'>enjoying</span> these photos of your hedgehog&#39;s beady little eyes</li>
+<li>Can I feed him grapes? I think he <span class='highlight'>enjoys</span> them.<br></li>
+</ul>
+
+<p>Notice how &quot;enjoying&quot; also matched &quot;enjoy&quot; and &quot;enjoys&quot; due to stemming.</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search Wildcards</h2>
+
+<ul>
+<li><code>to_tsquery(&#39;english&#39;,&#39;cat:*&#39;)</code> &nbsp; Searches for anything starting with cat</li>
+</ul>
+
+<p>Such as: <span class='highlight'>cat</span>, <span class='highlight'>cat</span>apult, <span class='highlight'>cat</span>aclysmic.</p>
+
+<p>But not: octo<span class='not-highlight'>cat</span>, s<span class='not-highlight'>cat</span>ter, prognosti<span class='not-highlight'>cat</span>e</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search Wild Cards</h2>
+
+<p>Find comments containing the term &quot;oil&quot;, and a word starting with &quot;quil&quot; :</p>
+
+<pre><code class="sql">SELECT body 
+FROM comments 
+WHERE to_tsvector(&#39;english&#39;, body) 
+  @@ ( to_tsquery(&#39;english&#39;,&#39;oil&#39;) 
+    &amp;&amp; to_tsquery(&#39;english&#39;,&#39;quil:*&#39;)
+  );
+</code></pre>
+
+<p><span class='footnote'>
+<code>V @@ (A &amp;&amp; B)</code> &nbsp; Searches V for A and B
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search Querying</h2>
+
+<ul>
+<li>What brand of <span class='highlight'>oil</span> do you use?  Have you tried <span class='highlight'>Quill</span>Swill?</li>
+</ul>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Heads Up</h2>
+
+<p><code>tsquery</code> only supports wildcards at the end of a term. </p>
+
+<p>While <code>quill:*</code> will match &quot;QuillSwill&quot;, but <code>*:swill</code> will not.</p>
+
+<p>In fact, <code>*:swill</code> will throw an error.</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Even More Heads Up!</h2>
+
+<p>Never pass user input directly to <code>to_tsquery</code>, it has a strict mini search syntax.  The following all fail:</p>
+
+<ul>
+<li><code>http://localhost</code> &nbsp; <code>:</code> has a special meaning </li>
+<li><code>O&#39;Reilly&#39;s Books</code> &nbsp; Paired quotes cannot be in the middle</li>
+<li><code>A &amp;&amp; B</code> &nbsp; <code>&amp;</code> and <code>|</code> are used for combining terms</li>
+</ul>
+
+<p>You need to sanitize queries, or use a gem that does this for you.</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search With ActiveRecord</h2>
+
+<p>We can wrap this up in a scope.</p>
+
+<pre><code class="ruby">class Comment &lt; ActiveRecord::Base
+  scope :search_all, -&gt; (query){ 
+    where(&quot;to_tsvector(&#39;english&#39;, body) @@ #{sanitize_query(query)}&quot;)
+  }
+</code></pre>
+
+<p><span class='footnote'>
+You need to write <code>sanitize_query</code>, or use a gem that does this for you.
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search With ActiveRecord</h2>
+
+<p>Find the comments about quill oil again, and limit it to 5 results:</p>
+
+<pre><code class="ruby">Comment.search_all(&quot;quil* oil&quot;).limit(5)
+</code></pre>
+
+<p>Since <code>search_all</code> is a scope, we chain it like all the other examples.</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Full Text Search Indexing </h2>
+
+<p>Create an index on the function call <code>to_tsvector(&#39;english&#39;, body)</code>:</p>
+
+<pre><code class="sql">CREATE INDEX comments_gin_index 
+ON comments 
+USING gin(to_tsvector(&#39;english&#39;, body));
+</code></pre>
+
+<p>The <code>gin</code> index is a special index for multivalued columns like a <code>text[]</code> or a <code>tsvector</code></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Heads Up</h2>
+
+<p>Since we are indexing a function call, <code>to_tsvector(&#39;english&#39;, body)</code>, we must call it the same way every time.</p>
+
+<p><span class='footnote'>
+  You don&#39;t have to use <code>english</code>, but you do need to be consistent.
+</span></p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>In Summary</h2>
+
+<ul>
+<li>Arrays can model tagging and hierarchies</li>
+<li>Hstore can be used to model custom data</li>
+<li>Postgres supports full text search</li>
+</ul>
+
+<p>You can now enjoy the happy hour!</p>
+
+<pre><code class="sql">SELECT * FROM beers WHERE
+traits @&gt; ARRAY[&#39;hoppy&#39;, &#39;floral&#39;]
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Any Questions?</h2>
+
+<p>Possible suggestions:</p>
+
+<ul>
+<li>Why not normalize your database instead of using arrays?</li>
+<li>Can I see how you implemented <code>sanitize_query</code>?</li>
+<li>What is a good gem for full text search?</li>
+<li>What about ActiveRecord 2 and 3?</li>
+<li>Why hstore instead of JSON?</li>
+<li>Can I buy you coffee?</li>
+</ul>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Extra Resources</h2>
+
+<ul>
+<li>ActiveRecord <a href="http://edgeguides.rubyonrails.org/active_record_querying.html#scopes">Queries &amp; Scopes</a></li>
+<li>Postgres <a href="http://www.postgresql.org/docs/9.2/static/functions-array.html">Array Operators</a></li>
+<li>Postgres <a href="http://www.postgresql.org/docs/9.2/static/hstore.html">Hstore Documentation</a></li>
+<li>Postgres <a href="http://www.postgresql.org/docs/9.2/static/textsearch.html">Full Text Search</a></li>
+<li>Ruby Gems for Full Text Search 
+
+<ul>
+<li><a href="https://github.com/textacular/textacular/">Textacular</a> Supports Active Record 2.x and 3.x</li>
+<li><a href="https://github.com/Casecommons/pg_search/">pg_search</a> Supports Active Record 3.x, but has more features</li>
+</ul></li>
+<li>My <a href="http://monkeyandcrow.com">Blog</a>, <a href="http://github.com/adamsanderson">Github</a>, and <a href="http://hedgewith.me">favorite social network</a></li>
+<li><a href="http://www.janbrett.com/how_to_draw_a_hedgehog.htm">How to draw a hedgehog</a>.</li>
+</ul>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Bonus</h2>
+
+<p>Here&#39;s <code>sanitize_query</code>:</p>
+
+<pre><code class="ruby">def self.sanitize_query(query, conjunction=&#39; &amp;&amp; &#39;)
+  &quot;(&quot; + tokenize_query(query).map{|t| term(t)}.join(conjunction) + &quot;)&quot;
+end
+</code></pre>
+
+<p>It breaks up the user&#39;s request into terms, and then joins them together.</p>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Bonus </h2>
+
+<p>We tokenize by splitting on white space, <code>&amp;</code>, <code>|</code>, and <code>:</code>.</p>
+
+<pre><code class="ruby">def self.tokenize_query(query)
+  query.split(/(\s|[&amp;|:])+/)
+end
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<h2>Bonus</h2>
+
+<p>Each of those tokens gets rewritten:</p>
+
+<pre><code class="ruby">def self.term(t)
+  # Strip leading apostrophes, they are never legal, &quot;&#39;ok&quot; becomes &quot;ok&quot;
+  t = t.gsub(/^&#39;+/,&#39;&#39;)
+  # Strip any *s that are not at the end of the term
+  t = t.gsub(/\*[^$]/,&#39;&#39;)
+  # Rewrite &quot;sear*&quot; as &quot;sear:*&quot; to support wildcard matching on terms
+  t = t.gsub(/\*$/,&#39;:*&#39;)
+  ...
+</code></pre>
+
+</div></section>
+
+<section class='slide'><div>
+<pre><code class="ruby">  ...
+  # If the only remaining text is a wildcard, return an empty string
+  t = &quot;&quot; if t.match(/^[:* ]+$/)
+
+  &quot;to_tsquery(&#39;english&#39;, #{quote_value t})&quot;
+end
+</code></pre>
+
+</div></section>
+
+
+
+	<div class="progress"><div></div></div>
+	<script src="shower/shower.min.js"></script>
+  <script src="shower/highlight.min.js"></script>
+  <script type="text/javascript" charset="utf-8">
+    hljs.initHighlightingOnLoad();
+  </script>
+</body>
+</html>
